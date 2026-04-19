@@ -29,7 +29,6 @@ body {
   justify-content:center;
   align-items:center;
   z-index:999;
-  box-shadow: 0 0 20px rgba(0,0,0,0.7);
 }
 
 #screen {
@@ -40,7 +39,6 @@ body {
   display:flex;
   justify-content:center;
   align-items:center;
-  color:white;
 }
 
 #codeInput {
@@ -59,21 +57,23 @@ body {
   font-weight:bold;
 }
 
-/* 🔥 BARRA */
+/* 🔥 BARRA PvZ */
 .level-container{
   width:100%;
   height:18px;
   background:#2b2b2b;
   border:2px solid #000;
+  position:relative;
 }
 
 .level-fill{
   height:100%;
   width:0%;
   background:linear-gradient(to right, #00ff00, #66ff66);
+  transition:width 0.2s linear;
 }
 
-/* 💀 EFECTO */
+/* 💀 APOCALIPSIS */
 .apocalypse {
   filter: brightness(0.6) contrast(1.4);
   animation: shake 0.2s infinite;
@@ -87,11 +87,13 @@ body {
   100% { transform: translate(0,0); }
 }
 
+/* SCORE */
 .score {
   text-align:center;
   padding:5px;
 }
 
+/* CARTAS */
 .top-bar {
   display:flex;
   justify-content:center;
@@ -111,6 +113,7 @@ body {
 }
 .selected { border:3px solid yellow; }
 
+/* MAPA */
 .game {
   flex:1;
   position:relative;
@@ -134,6 +137,7 @@ body {
 
 .plant { font-size:28px; }
 
+/* ZOMBIES */
 .zombie {
   position:absolute;
   font-size:30px;
@@ -159,7 +163,6 @@ body {
 
 <body>
 
-<!-- 📱 TELEFONO -->
 <div id="phone">
   <div id="screen">
     <input type="password" id="codeInput" placeholder="Código">
@@ -183,7 +186,7 @@ body {
   <div class="card" data="shooter">🌱<br>150</div>
   <div class="card" data="ice">❄️<br>175</div>
   <div class="card" data="wall">🧱<br>200</div>
-  <div class="card" data="shovel">🪏<br>Pala</div>
+  <div class="card" data="cherry">🍒<br>200</div>
 </div>
 
 <div class="game" id="game">
@@ -204,39 +207,31 @@ let wave=1;
 
 let infiniteSun = false;
 
-/* 📱 CODIGOS */
 const codeInput = document.getElementById("codeInput");
 
-codeInput.addEventListener("keydown", (e) => {
-  if(e.key === "Enter"){
-
-    if(codeInput.value === "1234"){
-      infiniteSun = true;
-      alert("☀️ SOLES INFINITOS ACTIVADOS ☀️");
-    }
-
-    if(codeInput.value === "0"){
-      infiniteSun = false;
-      alert("❌ SOLES INFINITOS DESACTIVADOS ❌");
-    }
-
-    codeInput.value = "";
+codeInput.addEventListener("change", () => {
+  if(codeInput.value === "24102024"){
+    infiniteSun = true;
+    alert("☀️ SOLES INFINITOS ACTIVADOS ☀️");
   }
+  if(codeInput.value === "0"){
+    infiniteSun = false;
+    alert("❌ SOLES INFINITOS DESACTIVADOS ❌");
+  }
+  codeInput.value = "";
 });
 
 let zombieMode="normal";
 let apocalypse=false;
 
-const cost={sunflower:50,shooter:150,ice:175,wall:200};
+const cost={sunflower:50,shooter:150,ice:175,wall:200,cherry:200};
 
-/* GRID */
 for(let i=0;i<45;i++){
   let c=document.createElement("div");
   c.className="cell";
   grid.appendChild(c);
 }
 
-/* SELECCIÓN */
 document.querySelectorAll(".card").forEach(c=>{
   c.onclick=()=>{
     document.querySelectorAll(".card").forEach(x=>x.classList.remove("selected"));
@@ -245,14 +240,8 @@ document.querySelectorAll(".card").forEach(c=>{
   };
 });
 
-/* PLANTAR */
 document.querySelectorAll(".cell").forEach((cell,i)=>{
   cell.onclick=()=>{
-
-    if(selected==="shovel"){
-      if(cell.children.length>0) cell.innerHTML="";
-      return;
-    }
 
     if(!selected || (!infiniteSun && suns<cost[selected]) || cell.children.length>0)return;
 
@@ -283,11 +272,24 @@ document.querySelectorAll(".cell").forEach((cell,i)=>{
       p.textContent="🧱";
     }
 
+    if(selected==="cherry"){
+      p.textContent="🍒";
+
+      setTimeout(()=>{
+        document.querySelectorAll(".zombie").forEach(z=>{
+          z.remove();
+          kills++;
+        });
+
+        killsEl.textContent=kills;
+        p.remove();
+      },500);
+    }
+
     cell.appendChild(p);
   };
 });
 
-/* SOLES */
 setInterval(()=>{
   let s=document.createElement("div");
   s.className="sun";
@@ -316,7 +318,6 @@ setInterval(()=>{
 
 },5000);
 
-/* GIRASOL */
 function spawnSun(cell){
   let s=document.createElement("div");
   s.className="sun";
@@ -337,7 +338,6 @@ function spawnSun(cell){
   };
 }
 
-/* DISPARO */
 function shoot(index,ice){
   let delay = ice ? 1800 : 1400;
 
@@ -385,7 +385,6 @@ function shoot(index,ice){
   },delay);
 }
 
-/* ZOMBIES */
 function spawnZombie(){
   let types=[
     {emoji:"🧟",hp:10},
@@ -400,7 +399,12 @@ function spawnZombie(){
   z.className="zombie";
   z.textContent=t.emoji;
 
-  z.hp=(zombieMode==="strong")? t.hp*3 : t.hp*2;
+  if(zombieMode==="strong"){
+    z.hp=t.hp*3;
+    z.textContent="💀"+t.emoji;
+  }else{
+    z.hp=t.hp*2;
+  }
 
   let x=game.clientWidth-60;
   let y=(game.clientHeight/5)*row+20;
@@ -415,6 +419,7 @@ function spawnZombie(){
 
     let speed = apocalypse ? 0.8 : 0.3;
     x -= speed;
+
     z.style.left=x+"px";
 
     if(x<0){
@@ -425,27 +430,30 @@ function spawnZombie(){
   },30);
 }
 
-/* OLEADAS */
 function startWave(){
+
   let time=0;
   let maxTime=15000;
   zombieMode="normal";
   apocalypse=false;
   game.classList.remove("apocalypse");
 
-  let spawnRate = 1200;
+  let spawnRate = 2000;
 
   let interval=setInterval(()=>{
     time+=100;
     let percent=(time/maxTime)*100;
+
     levelFill.style.width=percent+"%";
 
     if(percent>=50 && !apocalypse){
       zombieMode="strong";
       apocalypse=true;
+
       game.classList.add("apocalypse");
-      alert("💀 APOCALIPSIS INICIADO 💀");
-      spawnRate = 600;
+      alert("💀 APOCALIPSIS PvZ INICIADO 💀");
+
+      spawnRate = 1200;
     }
 
     if(time>=maxTime){
