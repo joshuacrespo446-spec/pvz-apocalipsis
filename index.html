@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>PvZ APOCALIPSIS</title>
+<title>PvZ PRO ARREGLADO</title>
 
 <style>
 body {
@@ -15,85 +15,12 @@ body {
   height:100vh;
 }
 
-/* 📱 TELEFONO */
-#phone {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 120px;
-  height: 200px;
-  background: black;
-  border-radius: 20px;
-  border: 3px solid #333;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:999;
-}
-
-#screen {
-  width: 90%;
-  height: 85%;
-  background: #111;
-  border-radius: 10px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-#codeInput {
-  width: 80%;
-  padding: 5px;
-  border-radius: 5px;
-  border:none;
-  text-align:center;
-}
-
-/* 🌊 OLEADA */
-.wave-bar {
+.wave-bar, .score {
   text-align:center;
   padding:5px;
   background:#222;
-  font-weight:bold;
 }
 
-/* 🔥 BARRA PvZ */
-.level-container{
-  width:100%;
-  height:18px;
-  background:#2b2b2b;
-  border:2px solid #000;
-  position:relative;
-}
-
-.level-fill{
-  height:100%;
-  width:0%;
-  background:linear-gradient(to right, #00ff00, #66ff66);
-  transition:width 0.2s linear;
-}
-
-/* 💀 APOCALIPSIS */
-.apocalypse {
-  filter: brightness(0.6) contrast(1.4);
-  animation: shake 0.2s infinite;
-}
-
-@keyframes shake {
-  0% { transform: translate(0,0); }
-  25% { transform: translate(2px,1px); }
-  50% { transform: translate(-2px,-1px); }
-  75% { transform: translate(2px,-2px); }
-  100% { transform: translate(0,0); }
-}
-
-/* SCORE */
-.score {
-  text-align:center;
-  padding:5px;
-}
-
-/* CARTAS */
 .top-bar {
   display:flex;
   justify-content:center;
@@ -102,18 +29,32 @@ body {
 }
 
 .card {
-  width:80px;
-  height:80px;
+  width:90px;
+  height:100px;
   background:#444;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
   cursor:pointer;
+  font-size:14px;
+  text-align:center;
+  position:relative;
 }
+
+.cooldown {
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.7);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:18px;
+}
+
 .selected { border:3px solid yellow; }
 
-/* MAPA */
 .game {
   flex:1;
   position:relative;
@@ -137,7 +78,6 @@ body {
 
 .plant { font-size:28px; }
 
-/* ZOMBIES */
 .zombie {
   position:absolute;
   font-size:30px;
@@ -151,42 +91,41 @@ body {
   border-radius:50%;
 }
 
-.ice { background:cyan; }
-
 .sun {
   position:absolute;
   font-size:25px;
   cursor:pointer;
+}
+
+.rushText{
+  position:absolute;
+  top:40%;
+  width:100%;
+  text-align:center;
+  font-size:40px;
+  color:red;
+  font-weight:bold;
+  animation: flash 0.5s infinite;
+}
+
+@keyframes flash {
+  0%{opacity:1;}
+  50%{opacity:0.3;}
+  100%{opacity:1;}
 }
 </style>
 </head>
 
 <body>
 
-<div id="phone">
-  <div id="screen">
-    <input type="password" id="codeInput" placeholder="Código">
-  </div>
-</div>
-
-<div class="wave-bar">
-🌊 Oleada: <span id="wave">1</span>
-</div>
-
-<div class="level-container">
-  <div class="level-fill" id="levelFill"></div>
-</div>
-
-<div class="score">
-☀️ <span id="score">100</span> | 🧟 <span id="kills">0</span>
-</div>
+<div class="wave-bar">🌊 Oleada: <span id="wave">1</span></div>
+<div class="score">☀️ <span id="score">100</span> | 🧟 <span id="kills">0</span></div>
 
 <div class="top-bar">
-  <div class="card" data="sunflower">🌻<br>50</div>
-  <div class="card" data="shooter">🌱<br>150</div>
-  <div class="card" data="ice">❄️<br>175</div>
-  <div class="card" data="wall">🧱<br>200</div>
-  <div class="card" data="cherry">🍒<br>200</div>
+  <div class="card" data="sunflower">🌻<br>Girasol<br>50</div>
+  <div class="card" data="shooter">🌱<br>Disparadora<br>150</div>
+  <div class="card" data="wall">🧱<br>Muro<br>100</div>
+  <div class="card" data="cherry">🍒<br>Bomba<br>200</div>
 </div>
 
 <div class="game" id="game">
@@ -194,78 +133,88 @@ body {
 </div>
 
 <script>
-const grid=document.getElementById("grid");
-const game=document.getElementById("game");
-const scoreEl=document.getElementById("score");
-const killsEl=document.getElementById("kills");
-const waveEl=document.getElementById("wave");
-const levelFill=document.getElementById("levelFill");
+const grid = document.getElementById("grid");
+const game = document.getElementById("game");
+const scoreEl = document.getElementById("score");
+const killsEl = document.getElementById("kills");
+const waveEl = document.getElementById("wave");
 
-let suns=100, selected=null;
-let kills=0;
-let wave=1;
+let suns = 100;
+let kills = 0;
+let wave = 1;
+let selected = null;
+let zombieRush = false;
 
-let infiniteSun = false;
+const cost = {sunflower:50, shooter:150, wall:100, cherry:200};
 
-const codeInput = document.getElementById("codeInput");
+// COOLDOWNS
+const cooldowns = {sunflower:5, shooter:7, wall:10, cherry:15};
+let ready = {sunflower:true, shooter:true, wall:true, cherry:true};
 
-codeInput.addEventListener("change", () => {
-  if(codeInput.value === "24102024"){
-    infiniteSun = true;
-    alert("☀️ SOLES INFINITOS ACTIVADOS ☀️");
-  }
-  if(codeInput.value === "0"){
-    infiniteSun = false;
-    alert("❌ SOLES INFINITOS DESACTIVADOS ❌");
-  }
-  codeInput.value = "";
-});
-
-let zombieMode="normal";
-let apocalypse=false;
-
-const cost={sunflower:50,shooter:150,ice:175,wall:200,cherry:200};
-
+// GRID
 for(let i=0;i<45;i++){
   let c=document.createElement("div");
   c.className="cell";
   grid.appendChild(c);
 }
 
+// SELECCIONAR
 document.querySelectorAll(".card").forEach(c=>{
   c.onclick=()=>{
+    let type=c.getAttribute("data");
+    if(!ready[type]) return;
+
     document.querySelectorAll(".card").forEach(x=>x.classList.remove("selected"));
     c.classList.add("selected");
-    selected=c.getAttribute("data");
+    selected=type;
   };
 });
 
+// COOLDOWN
+function startCooldown(type, card){
+  ready[type] = false;
+  let cd = cooldowns[type];
+
+  let overlay = document.createElement("div");
+  overlay.className="cooldown";
+  overlay.textContent=cd;
+
+  card.appendChild(overlay);
+
+  let interval=setInterval(()=>{
+    cd--;
+    overlay.textContent=cd;
+
+    if(cd<=0){
+      clearInterval(interval);
+      ready[type] = true;
+      overlay.remove();
+    }
+  },1000);
+}
+
+// PLANTAR
 document.querySelectorAll(".cell").forEach((cell,i)=>{
   cell.onclick=()=>{
+    if(!selected || suns < cost[selected] || cell.children.length>0 || !ready[selected]) return;
 
-    if(!selected || (!infiniteSun && suns<cost[selected]) || cell.children.length>0)return;
+    let card = document.querySelector(`.card[data="${selected}"]`);
+    suns -= cost[selected];
+    scoreEl.textContent = suns;
 
-    if(!infiniteSun){
-      suns-=cost[selected];
-      scoreEl.textContent=suns;
-    }
+    startCooldown(selected, card);
 
-    let p=document.createElement("div");
+    let p = document.createElement("div");
     p.className="plant";
 
     if(selected==="sunflower"){
       p.textContent="🌻";
-      setInterval(()=>spawnSun(cell),6000);
+      setInterval(()=>spawnSun(cell),5000);
     }
 
     if(selected==="shooter"){
       p.textContent="🌱";
-      shoot(i,false);
-    }
-
-    if(selected==="ice"){
-      p.textContent="❄️";
-      shoot(i,true);
+      shoot(i);
     }
 
     if(selected==="wall"){
@@ -274,13 +223,13 @@ document.querySelectorAll(".cell").forEach((cell,i)=>{
 
     if(selected==="cherry"){
       p.textContent="🍒";
-
       setTimeout(()=>{
         document.querySelectorAll(".zombie").forEach(z=>{
-          z.remove();
-          kills++;
+          if(!z.boss){
+            z.remove();
+            kills++;
+          }
         });
-
         killsEl.textContent=kills;
         p.remove();
       },500);
@@ -290,6 +239,7 @@ document.querySelectorAll(".cell").forEach((cell,i)=>{
   };
 });
 
+// SOLES DEL CIELO
 setInterval(()=>{
   let s=document.createElement("div");
   s.className="sun";
@@ -310,14 +260,15 @@ setInterval(()=>{
   },20);
 
   s.onclick=()=>{
-    suns+=75;
+    suns+=50;
     scoreEl.textContent=suns;
     s.remove();
     clearInterval(fall);
   };
 
-},5000);
+},4000);
 
+// SOL GIRASOL
 function spawnSun(cell){
   let s=document.createElement("div");
   s.className="sun";
@@ -338,22 +289,13 @@ function spawnSun(cell){
   };
 }
 
-function shoot(index,ice){
-  let delay = ice ? 1800 : 1400;
-
+// DISPARO
+function shoot(index){
   setInterval(()=>{
     let row=Math.floor(index/9);
-    let has=false;
-
-    document.querySelectorAll(".zombie").forEach(z=>{
-      let zr=Math.floor(z.offsetTop/(game.clientHeight/5));
-      if(zr===row) has=true;
-    });
-
-    if(!has) return;
 
     let b=document.createElement("div");
-    b.className="bullet"+(ice?" ice":"");
+    b.className="bullet";
 
     let x=0;
     let y=(game.clientHeight/5)*row+40;
@@ -369,7 +311,7 @@ function shoot(index,ice){
 
       document.querySelectorAll(".zombie").forEach(z=>{
         if(Math.abs(z.offsetLeft-x)<20){
-          z.hp-=1;
+          z.hp--;
           if(z.hp<=0){
             kills++;
             killsEl.textContent=kills;
@@ -382,30 +324,18 @@ function shoot(index,ice){
 
     },30);
 
-  },delay);
+  },1500);
 }
 
+// ZOMBIES
 function spawnZombie(){
-  let types=[
-    {emoji:"🧟",hp:10},
-    {emoji:"🧟‍♂️",hp:18},
-    {emoji:"🪣",hp:30}
-  ];
-
-  let t=types[Math.floor(Math.random()*types.length)];
-  let row=Math.floor(Math.random()*5);
-
   let z=document.createElement("div");
   z.className="zombie";
-  z.textContent=t.emoji;
+  z.textContent="🧟";
 
-  if(zombieMode==="strong"){
-    z.hp=t.hp*3;
-    z.textContent="💀"+t.emoji;
-  }else{
-    z.hp=t.hp*2;
-  }
+  z.hp = zombieRush ? 25 : 10 + wave*2;
 
+  let row=Math.floor(Math.random()*5);
   let x=game.clientWidth-60;
   let y=(game.clientHeight/5)*row+20;
 
@@ -417,9 +347,8 @@ function spawnZombie(){
   let move=setInterval(()=>{
     if(!z.isConnected){ clearInterval(move); return; }
 
-    let speed = apocalypse ? 0.8 : 0.3;
+    let speed = zombieRush ? 1 : 0.3 + wave*0.05;
     x -= speed;
-
     z.style.left=x+"px";
 
     if(x<0){
@@ -430,46 +359,34 @@ function spawnZombie(){
   },30);
 }
 
-function startWave(){
+// HORA ZOMBIE
+function zombieHour(){
+  zombieRush = true;
+  game.style.filter = "brightness(0.4)";
 
-  let time=0;
-  let maxTime=15000;
-  zombieMode="normal";
-  apocalypse=false;
-  game.classList.remove("apocalypse");
+  let msg = document.createElement("div");
+  msg.className="rushText";
+  msg.textContent="💀 HORA ZOMBIE 💀";
+  game.appendChild(msg);
 
-  let spawnRate = 2000;
-
-  let interval=setInterval(()=>{
-    time+=100;
-    let percent=(time/maxTime)*100;
-
-    levelFill.style.width=percent+"%";
-
-    if(percent>=50 && !apocalypse){
-      zombieMode="strong";
-      apocalypse=true;
-
-      game.classList.add("apocalypse");
-      alert("💀 APOCALIPSIS PvZ INICIADO 💀");
-
-      spawnRate = 1200;
-    }
-
-    if(time>=maxTime){
-      clearInterval(interval);
-      wave++;
-      waveEl.textContent=wave;
-      levelFill.style.width="0%";
-      startWave();
-    }
-
-  },100);
-
-  setInterval(()=>spawnZombie(), spawnRate);
+  setTimeout(()=>{
+    zombieRush = false;
+    game.style.filter = "none";
+    msg.remove();
+  },8000);
 }
 
-startWave();
+setInterval(()=>zombieHour(),30000);
+
+// SPAWN ZOMBIES
+setInterval(()=>spawnZombie(),2000);
+
+// OLEADAS
+setInterval(()=>{
+  wave++;
+  waveEl.textContent=wave;
+},15000);
+
 </script>
 
 </body>
